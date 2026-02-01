@@ -1,6 +1,6 @@
-package com.mario.hexagonalbettingengine.application.controller.mapper;
+package com.mario.hexagonalbettingengine.application.eventoutcome.mapper;
 
-import com.mario.hexagonalbettingengine.application.controller.request.EventOutcomeRequestDto;
+import com.mario.hexagonalbettingengine.application.eventoutcome.request.EventOutcomeRequestDto;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcome;
 import org.mapstruct.Mapper;
 

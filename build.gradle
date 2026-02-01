@@ -31,7 +31,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     runtimeOnly 'com.h2database:h2'
-    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.springframework.boot:spring-boot-h2console'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    runtimeOnly 'org.flywaydb:flyway-database-h2'
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"

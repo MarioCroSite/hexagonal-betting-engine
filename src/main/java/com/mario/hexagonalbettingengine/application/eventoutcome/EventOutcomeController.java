@@ -1,7 +1,7 @@
-package com.mario.hexagonalbettingengine.application.controller.eventoutcome;
+package com.mario.hexagonalbettingengine.application.eventoutcome;
 
-import com.mario.hexagonalbettingengine.application.controller.mapper.EventOutcomeDtoMapper;
-import com.mario.hexagonalbettingengine.application.controller.request.EventOutcomeRequestDto;
+import com.mario.hexagonalbettingengine.application.eventoutcome.mapper.EventOutcomeDtoMapper;
+import com.mario.hexagonalbettingengine.application.eventoutcome.request.EventOutcomeRequestDto;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcomeCommandHandler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -7,4 +7,5 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface EventOutcomeMapper {
     EventOutcomePayload toPayload(EventOutcome eventOutcome);
+    EventOutcome toDomain(EventOutcomePayload payload);
 }
