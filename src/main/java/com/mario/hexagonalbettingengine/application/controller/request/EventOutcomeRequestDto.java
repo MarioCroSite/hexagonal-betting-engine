@@ -1,4 +1,4 @@
-package com.mario.hexagonalbettingengine.application.eventoutcome;
+package com.mario.hexagonalbettingengine.application.controller.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

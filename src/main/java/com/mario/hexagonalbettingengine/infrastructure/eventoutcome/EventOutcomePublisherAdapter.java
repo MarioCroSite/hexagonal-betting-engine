@@ -3,6 +3,7 @@ package com.mario.hexagonalbettingengine.infrastructure.eventoutcome;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcome;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcomePublisher;
 import com.mario.hexagonalbettingengine.infrastructure.config.MessagingProperties;
+import com.mario.hexagonalbettingengine.infrastructure.eventoutcome.mapper.EventOutcomeMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,9 +23,9 @@ public class EventOutcomePublisherAdapter implements EventOutcomePublisher {
     public void publish(EventOutcome eventOutcome) {
         var payload = mapper.toPayload(eventOutcome);
         var key = payload.eventId();
-        var kafkaProps = properties.kafka();
+        var config = properties.kafka().eventOutcomes();
 
-        kafkaTemplate.send(kafkaProps.topicName(), key, payload)
+        kafkaTemplate.send(config.topic(), key, payload)
                 .whenComplete((result, ex) -> handleCompletion(key, result, ex));
     }
 

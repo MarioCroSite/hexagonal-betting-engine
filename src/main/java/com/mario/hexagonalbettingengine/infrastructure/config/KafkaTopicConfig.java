@@ -14,10 +14,19 @@ public class KafkaTopicConfig {
 
     @Bean
     public NewTopic eventOutcomesTopic() {
-        var kafkaProps = properties.kafka();
-        return TopicBuilder.name(kafkaProps.topicName())
-                .partitions(kafkaProps.partitions())
-                .replicas(kafkaProps.replicas())
+        var config = properties.kafka().eventOutcomes();
+        return TopicBuilder.name(config.topic())
+                .partitions(config.partitions())
+                .replicas(config.replicas())
+                .build();
+    }
+
+    @Bean
+    public NewTopic eventOutcomesDlqTopic() {
+        var config = properties.kafka().eventOutcomes();
+        return TopicBuilder.name(config.dlqTopic())
+                .partitions(config.dlqPartitions())
+                .replicas(config.dlqReplicas())
                 .build();
     }
 }

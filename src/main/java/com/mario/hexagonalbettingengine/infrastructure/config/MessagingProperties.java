@@ -12,10 +12,20 @@ public record MessagingProperties(
         KafkaConfig kafka
 ) {
     public record KafkaConfig(
-            @NotBlank String topicName,
-            int partitions,
-            int replicas
+            @NotNull
+            EventOutcomesConfig eventOutcomes
     ) {
-
+        public record EventOutcomesConfig(
+                @NotBlank String topic,
+                @NotBlank String dlqTopic,
+                int partitions,
+                int replicas,
+                int dlqPartitions,
+                int dlqReplicas,
+                long retryInterval,
+                int retryAttempts,
+                int concurrency
+        ) {
+        }
     }
 }

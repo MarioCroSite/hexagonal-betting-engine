@@ -20,11 +20,29 @@ spring:
         linger.ms: 5
         delivery.timeout.ms: 60000
         retries: 2147483647
-        retry.backoff.ms: 300
+        retry.backoff.ms: 500
+    consumer:
+      group-id: hexagonal-betting-engine
+      enable-auto-commit: false
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "com.mario.hexagonalbettingengine.infrastructure.*"
+        isolation.level: read_committed
 
 app:
   messaging:
     kafka:
-      topic-name: event-outcomes
-      partitions: 3
-      replicas: 1
+      event-outcomes:
+        topic: event-outcomes
+        dlq-topic: event-outcomes-dlq
+        partitions: 3
+        replicas: 1
+        dlq-partitions: 1
+        dlq-replicas: 1
+        retry-interval: 1000
+        retry-attempts: 3
+        concurrency: 3

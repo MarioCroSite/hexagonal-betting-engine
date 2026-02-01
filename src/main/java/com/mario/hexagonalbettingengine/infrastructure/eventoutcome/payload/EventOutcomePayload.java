@@ -1,4 +1,4 @@
-package com.mario.hexagonalbettingengine.infrastructure.eventoutcome;
+package com.mario.hexagonalbettingengine.infrastructure.eventoutcome.payload;
 
 public record EventOutcomePayload(
         String eventId,
