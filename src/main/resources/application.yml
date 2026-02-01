@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hexagonal-betting-engine
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+        delivery.timeout.ms: 60000
+        retries: 2147483647
+        retry.backoff.ms: 300
+
+app:
+  messaging:
+    kafka:
+      topic-name: event-outcomes
+      partitions: 3
+      replicas: 1
