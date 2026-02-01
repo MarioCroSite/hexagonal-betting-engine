@@ -14,14 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BetSettlementService implements BetSettlement {
 
-    private final BetRepository betRepository;
+    private final BetRepository repository;
+    private final BetSettlementPublisher publisher;
 
     @Override
     @Transactional
     public void settle(EventOutcome eventOutcome) {
         log.info("Starting settlement for Event ID: {}", eventOutcome.eventId());
 
-        var pendingBets = betRepository.findPendingBetsByEventId(eventOutcome.eventId());
+        var pendingBets = repository.findPendingBetsByEventId(eventOutcome.eventId());
 
         if (pendingBets.isEmpty()) {
             log.info("No pending bets found for event {}", eventOutcome.eventId());
@@ -37,6 +38,8 @@ public class BetSettlementService implements BetSettlement {
         var finalStatus = isWinner ? WON : LOST;
 
         var settledBet = bet.withStatus(finalStatus);
-        betRepository.save(settledBet);
+        repository.save(settledBet);
+
+        publisher.publish(settledBet);
     }
 }

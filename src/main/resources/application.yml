@@ -52,8 +52,17 @@ spring:
         spring.json.trusted.packages: "com.mario.hexagonalbettingengine.infrastructure.*"
         isolation.level: read_committed
 
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: ${app.messaging.rocketmq.producer-group}
+
 app:
   messaging:
+    rocketmq:
+      enabled: false
+      topic: bet-settlements
+      producer-group: hexagonal-betting-engine
     kafka:
       event-outcomes:
         topic: event-outcomes

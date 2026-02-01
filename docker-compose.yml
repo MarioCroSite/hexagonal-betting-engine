@@ -28,7 +28,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:v0.7.2
     container_name: betting_kafka_ui
     networks:
       - betting-net
@@ -39,3 +39,39 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: betting_kafka:29092
+
+#  rocketmq-nameserver:
+#    image: apache/rocketmq:4.9.4
+#    container_name: betting_rmq_namesrv
+#    networks:
+#      - betting-net
+#    ports:
+#      - "9876:9876"
+#    command: sh mqnamesrv
+#
+#  rocketmq-broker:
+#    image: apache/rocketmq:4.9.4
+#    container_name: betting_rmq_broker
+#    networks:
+#      - betting-net
+#    ports:
+#      - "10909:10909"
+#      - "10911:10911"
+#    environment:
+#      - NAMESRV_ADDR=rocketmq-nameserver:9876
+#      - BROKER_IP1=127.0.0.1
+#    depends_on:
+#      - rocketmq-nameserver
+#    command: sh mqbroker -n rocketmq-nameserver:9876 autoCreateTopicEnable=true
+#
+#  rocketmq-dashboard:
+#    image: apacherocketmq/rocketmq-dashboard:2.1.0
+#    container_name: betting_rmq_dashboard
+#    networks:
+#      - betting-net
+#    depends_on:
+#      - rocketmq-nameserver
+#    ports:
+#      - "8082:8082"
+#    environment:
+#      - NAMESRV_ADDR=rocketmq-nameserver:9876

@@ -9,8 +9,17 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app.messaging")
 public record MessagingProperties(
         @NotNull
+        RocketMqConfig rocketmq,
+        @NotNull
         KafkaConfig kafka
 ) {
+    public record RocketMqConfig(
+            boolean enabled,
+            @NotBlank String topic,
+            @NotBlank String producerGroup
+    ) {
+    }
+
     public record KafkaConfig(
             @NotNull
             EventOutcomesConfig eventOutcomes
