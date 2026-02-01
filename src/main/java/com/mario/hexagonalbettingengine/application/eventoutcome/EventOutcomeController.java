@@ -18,8 +18,8 @@ import static org.springframework.http.HttpStatus.ACCEPTED;
 @RequiredArgsConstructor
 public class EventOutcomeController {
 
-    private EventOutcomeCommandHandler handler;
-    private EventOutcomeDtoMapper mapper;
+    private final EventOutcomeCommandHandler handler;
+    private final EventOutcomeDtoMapper mapper;
 
     @PostMapping
     public ResponseEntity<Void> placeEventOutcome(@Valid @RequestBody EventOutcomeRequestDto request) {
