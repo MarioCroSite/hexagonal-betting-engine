@@ -35,7 +35,6 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     implementation 'org.springframework.boot:spring-boot-h2console'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
-    runtimeOnly 'org.flywaydb:flyway-database-h2'
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
@@ -47,6 +46,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
 
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"

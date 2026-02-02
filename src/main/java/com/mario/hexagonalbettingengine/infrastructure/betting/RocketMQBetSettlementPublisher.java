@@ -37,11 +37,13 @@ public class RocketMQBetSettlementPublisher implements BetSettlementPublisher {
             var result = rocketMQTemplate.syncSend(topic, payload);
             var status = result.getSendStatus();
 
-            if (status == SEND_OK) {
-                log.info("[REAL ROCKETMQ] Bet {} successfully published to topic: {}", payload.betId(), topic);
-            } else {
+            if (status != SEND_OK) {
                 throw new MessagingException(format("Broker did not acknowledge message. Status: %s", status));
             }
+
+            log.info("[REAL ROCKETMQ] Bet {} successfully published to topic: {}", payload.betId(), topic);
+        } catch (MessagingException e) {
+            throw e;
         } catch (Exception e) {
             log.error("[REAL ROCKETMQ] Failed to publish bet {}. Topic: {}", payload.betId(), topic, e);
             throw new MessagingException("RocketMQ error", e);
