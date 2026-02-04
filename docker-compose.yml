@@ -40,38 +40,48 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: betting_kafka:29092
 
-#  rocketmq-nameserver:
-#    image: apache/rocketmq:4.9.4
-#    container_name: betting_rmq_namesrv
-#    networks:
-#      - betting-net
-#    ports:
-#      - "9876:9876"
-#    command: sh mqnamesrv
-#
-#  rocketmq-broker:
-#    image: apache/rocketmq:4.9.4
-#    container_name: betting_rmq_broker
-#    networks:
-#      - betting-net
-#    ports:
-#      - "10909:10909"
-#      - "10911:10911"
-#    environment:
-#      - NAMESRV_ADDR=rocketmq-nameserver:9876
-#      - BROKER_IP1=127.0.0.1
-#    depends_on:
-#      - rocketmq-nameserver
-#    command: sh mqbroker -n rocketmq-nameserver:9876 autoCreateTopicEnable=true
-#
-#  rocketmq-dashboard:
-#    image: apacherocketmq/rocketmq-dashboard:2.1.0
-#    container_name: betting_rmq_dashboard
-#    networks:
-#      - betting-net
-#    depends_on:
-#      - rocketmq-nameserver
-#    ports:
-#      - "8082:8082"
-#    environment:
-#      - NAMESRV_ADDR=rocketmq-nameserver:9876
+  rocketmq-nameserver:
+    image: apache/rocketmq:4.9.7
+    container_name: betting_rmq_namesrv
+    networks:
+      - betting-net
+    ports:
+      - "9876:9876"
+    environment:
+      - JAVA_OPT_EXT=-Xms256m -Xmx256m
+    command: sh mqnamesrv
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  rocketmq-broker:
+    image: apache/rocketmq:4.9.7
+    container_name: betting_rmq_broker
+    networks:
+      - betting-net
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    environment:
+      - NAMESRV_ADDR=rocketmq-nameserver:9876
+      - JAVA_OPT_EXT=-Xms512m -Xmx512m
+    depends_on:
+      - rocketmq-nameserver
+    volumes:
+      - ./rocketmq/broker.conf:/home/rocketmq/rocketmq-4.9.7/conf/broker.conf
+    command: sh mqbroker -n rocketmq-nameserver:9876 -c /home/rocketmq/rocketmq-4.9.7/conf/broker.conf
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  rocketmq-dashboard:
+    image: styletang/rocketmq-console-ng:1.0.0
+    container_name: betting_rmq_dashboard
+    networks:
+      - betting-net
+    depends_on:
+      - rocketmq-nameserver
+    ports:
+      - "8082:8080"
+    environment:
+      - JAVA_OPTS=-Drocketmq.namesrv.addr=rocketmq-nameserver:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

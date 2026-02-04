@@ -52,6 +52,7 @@ rocketmq:
   name-server: localhost:9876
   producer:
     group: ${app.messaging.rocketmq.producer-group}
+    send-message-timeout: 30000
 
 app:
   messaging:
