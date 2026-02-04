@@ -4,11 +4,15 @@ import com.mario.hexagonalbettingengine.application.eventoutcome.request.EventOu
 
 public class EventOutcomeRequestDtoFixtures {
 
+    public static final String DEFAULT_EVENT_ID = "match-100";
+    public static final String DEFAULT_EVENT_NAME = "Real Madrid vs Barcelona";
+    public static final String DEFAULT_WINNER_ID = "REAL_MADRID";
+
     public static EventOutcomeRequestDto.EventOutcomeRequestDtoBuilder baseRequest() {
         return EventOutcomeRequestDto.builder()
-                .eventId("match-100")
-                .eventName("Real Madrid vs Barcelona")
-                .eventWinnerId("REAL_MADRID");
+                .eventId(DEFAULT_EVENT_ID)
+                .eventName(DEFAULT_EVENT_NAME)
+                .eventWinnerId(DEFAULT_WINNER_ID);
     }
 
     public static EventOutcomeRequestDto validRequest() {

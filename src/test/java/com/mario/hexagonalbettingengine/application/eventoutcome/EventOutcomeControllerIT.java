@@ -1,7 +1,7 @@
 package com.mario.hexagonalbettingengine.application.eventoutcome;
 
 import com.mario.hexagonalbettingengine.BaseIT;
-import com.mario.hexagonalbettingengine.application.eventoutcome.request.EventOutcomeRequestDto;
+import com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures;
 import com.mario.hexagonalbettingengine.infrastructure.betting.BetStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +10,9 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import java.time.Duration;
 
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_EVENT_ID;
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_WINNER_ID;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeRequestDtoFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,14 +25,10 @@ class EventOutcomeControllerIT extends BaseIT {
     @DisplayName("E2E: Should accept outcome, process Kafka message, and settle bets in DB")
     void shouldProcessEventOutcomeAndSettleBets() throws Exception {
         // Given
-        savePendingBet("bet-1", "match-100", "REAL_MADRID");
-        savePendingBet("bet-2", "match-100", "BARCELONA");
+        savePendingBet("bet-1", DEFAULT_EVENT_ID, DEFAULT_WINNER_ID);
+        savePendingBet("bet-2", DEFAULT_EVENT_ID, "BARCELONA");
 
-        var request = EventOutcomeRequestDto.builder()
-                .eventId("match-100")
-                .eventName("El Classico")
-                .eventWinnerId("REAL_MADRID")
-                .build();
+        var request = validRequest();
 
         // When
         mockMvc.perform(post("/api/event-outcomes")
@@ -41,16 +40,24 @@ class EventOutcomeControllerIT extends BaseIT {
         await().atMost(Duration.ofSeconds(5))
                 .pollInterval(Duration.ofMillis(100))
                 .untilAsserted(() -> {
-                    var winner = betRepository.findById("bet-1").orElseThrow();
-                    var loser = betRepository.findById("bet-2").orElseThrow();
+                    var actualWinner = betRepository.findById("bet-1").orElseThrow();
+                    var actualLoser = betRepository.findById("bet-2").orElseThrow();
 
-                    assertThat(winner.getStatus())
-                            .as("Winning bet should be updated to WON")
-                            .isEqualTo(BetStatus.WON);
+                    var expectedWinner = BetEntityFixtures.createEntity(
+                            "bet-1", DEFAULT_EVENT_ID, DEFAULT_WINNER_ID, BetStatus.WON
+                    );
 
-                    assertThat(loser.getStatus())
-                            .as("Losing bet should be updated to LOST")
-                            .isEqualTo(BetStatus.LOST);
+                    assertThat(actualWinner)
+                            .usingRecursiveComparison()
+                            .isEqualTo(expectedWinner);
+
+                    var expectedLoser = BetEntityFixtures.createEntity(
+                            "bet-2", DEFAULT_EVENT_ID, "BARCELONA", BetStatus.LOST
+                    );
+
+                    assertThat(actualLoser)
+                            .usingRecursiveComparison()
+                            .isEqualTo(expectedLoser);
                 });
     }
 
@@ -58,11 +65,7 @@ class EventOutcomeControllerIT extends BaseIT {
     @DisplayName("Should reject invalid request (Validation check)")
     void shouldReturnBadRequestWhenDataIsInvalid() throws Exception {
         // Given
-        var request = EventOutcomeRequestDto.builder()
-                .eventId("")
-                .eventName("Match")
-                .eventWinnerId("WINNER")
-                .build();
+        var request = createInvalidRequest("", "Match", "WINNER");
 
         // When & Then
         mockMvc.perform(post("/api/event-outcomes")
@@ -76,22 +79,26 @@ class EventOutcomeControllerIT extends BaseIT {
     void shouldHandleEventOutcomeWhenNoBetsExist() throws Exception {
         // Given
         savePendingBet("bet-ignore-1", "other-match", "winner-1");
+
+        var expectedUnchangedBet = betRepository.findById("bet-ignore-1").orElseThrow();
         long initialCount = betRepository.count();
 
-        var request = EventOutcomeRequestDto.builder()
+        var request = baseRequest()
                 .eventId("unknown-match-999")
-                .eventName("Unknown Match")
-                .eventWinnerId("SOME_TEAM")
                 .build();
 
-        // When & Then
+        // When
         mockMvc.perform(post("/api/event-outcomes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted());
 
+        // Then
         assertThat(betRepository.count()).isEqualTo(initialCount);
-        var existingBet = betRepository.findById("bet-ignore-1").orElseThrow();
-        assertThat(existingBet.getStatus()).isEqualTo(BetStatus.PENDING);
+
+        var actualBet = betRepository.findById("bet-ignore-1").orElseThrow();
+        assertThat(actualBet)
+                .usingRecursiveComparison()
+                .isEqualTo(expectedUnchangedBet);
     }
 }

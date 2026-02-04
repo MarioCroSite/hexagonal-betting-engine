@@ -1,14 +1,13 @@
 package com.mario.hexagonalbettingengine.infrastructure.betting.mapper;
 
-import com.mario.hexagonalbettingengine.domain.betting.Bet;
-import com.mario.hexagonalbettingengine.infrastructure.betting.BetEntity;
 import com.mario.hexagonalbettingengine.infrastructure.betting.BetStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import java.math.BigDecimal;
-
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.baseEntity;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.baseBet;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.wonBet;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class BetMapperTest {
@@ -19,13 +18,7 @@ class BetMapperTest {
     @DisplayName("Should map Entity to Domain")
     void shouldMapEntityToDomain() {
         // Given
-        var entity = BetEntity.builder()
-                .betId("bet-1")
-                .userId("user-1")
-                .eventId("match-100")
-                .eventMarketId("1x2")
-                .eventWinnerId("REAL_MADRID")
-                .betAmount(new BigDecimal("50.00"))
+        var entity = baseEntity()
                 .status(BetStatus.WON)
                 .build();
 
@@ -43,13 +36,7 @@ class BetMapperTest {
     @DisplayName("Should map Domain to Entity")
     void shouldMapDomainToEntity() {
         // Given
-        var domain = Bet.builder()
-                .betId("bet-1")
-                .userId("user-1")
-                .eventId("match-100")
-                .eventMarketId("1x2")
-                .eventWinnerId("REAL_MADRID")
-                .betAmount(new BigDecimal("50.00"))
+        var domain = baseBet()
                 .status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING)
                 .build();
 
@@ -67,16 +54,7 @@ class BetMapperTest {
     @DisplayName("Should map Domain to Payload and generate 'settledAt' timestamp")
     void shouldMapDomainToPayload() {
         // Given
-        var domain = Bet.builder()
-                .betId("bet-1")
-                .userId("user-1")
-                .eventId("match-100")
-                .eventMarketId("1x2")
-                .eventWinnerId("REAL_MADRID")
-                .betAmount(new BigDecimal("75.50"))
-                .status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.WON)
-                .build();
-
+        var domain = wonBet().build();
         // When
         var payload = mapper.toPayload(domain);
 
@@ -86,6 +64,7 @@ class BetMapperTest {
                 .ignoringFields("settledAt")
                 .withEnumStringComparison()
                 .isEqualTo(domain);
+
         assertThat(payload.settledAt()).isNotNull();
     }
 }

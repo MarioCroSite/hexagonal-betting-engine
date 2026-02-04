@@ -1,7 +1,7 @@
 package com.mario.hexagonalbettingengine.infrastructure.eventoutcome;
 
 import com.mario.hexagonalbettingengine.BaseIT;
-import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcome;
+import com.mario.hexagonalbettingengine.infrastructure.config.MessagingProperties;
 import com.mario.hexagonalbettingengine.infrastructure.eventoutcome.payload.EventOutcomePayload;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,18 +16,20 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@EmbeddedKafka(partitions = 1, topics = {"event-outcomes-test"})
+@EmbeddedKafka(partitions = 1, topics = {"${app.messaging.kafka.event-outcomes.topic}"})
 class EventOutcomeKafkaProducerIT extends BaseIT {
 
     @Autowired
     private EventOutcomePublisherAdapter publisher;
 
     @Autowired
-    private BlockingQueue<ConsumerRecord<String, EventOutcomePayload>> records;
+    private MessagingProperties messagingProperties;
 
-    private static final String TOPIC_NAME = "event-outcomes-test";
+    @Autowired
+    private BlockingQueue<ConsumerRecord<String, EventOutcomePayload>> records;
 
     @TestConfiguration
     static class KafkaTestListenerConfig {
@@ -40,11 +42,9 @@ class EventOutcomeKafkaProducerIT extends BaseIT {
         }
 
         @KafkaListener(
-                topics = "event-outcomes-test",
+                topics = "${app.messaging.kafka.event-outcomes.topic}",
                 groupId = "producer-it-unique-group",
-                properties = {
-                        "auto.offset.reset=earliest"
-                }
+                properties = {"auto.offset.reset=earliest"}
         )
         public void listen(ConsumerRecord<String, EventOutcomePayload> record) {
             records.add(record);
@@ -60,11 +60,7 @@ class EventOutcomeKafkaProducerIT extends BaseIT {
     @DisplayName("Should publish event outcome to Kafka topic")
     void shouldPublishEventOutcomeToKafka() throws InterruptedException {
         // Given
-        var eventOutcome = EventOutcome.builder()
-                .eventId("match-100")
-                .eventName("Real Madrid vs Barcelona")
-                .eventWinnerId("REAL_MADRID")
-                .build();
+        var eventOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         // When
         publisher.publish(eventOutcome);
@@ -73,20 +69,20 @@ class EventOutcomeKafkaProducerIT extends BaseIT {
         var record = records.poll(5, TimeUnit.SECONDS);
 
         assertThat(record).isNotNull();
-        assertThat(record.topic()).isEqualTo(TOPIC_NAME);
-        assertThat(record.key()).isEqualTo("match-100");
-        assertThat(record.value().eventId()).isEqualTo("match-100");
+
+        assertThat(record.topic())
+                .isEqualTo(messagingProperties.kafka().eventOutcomes().topic());
+
+        assertThat(record.key()).isEqualTo(DEFAULT_EVENT_ID);
+        assertThat(record.value().eventId()).isEqualTo(DEFAULT_EVENT_ID);
     }
 
     @Test
     @DisplayName("Should use event ID as message key")
     void shouldUseEventIdAsMessageKey() throws InterruptedException {
         // Given
-        var eventOutcome = EventOutcome.builder()
-                .eventId("pk-test-123")
-                .eventName("Key Test")
-                .eventWinnerId("A")
-                .build();
+        var pkEventId = "pk-test-123";
+        var eventOutcome = createOutcome(pkEventId, "A");
 
         // When
         publisher.publish(eventOutcome);
@@ -94,15 +90,15 @@ class EventOutcomeKafkaProducerIT extends BaseIT {
         // Then
         var record = records.poll(5, TimeUnit.SECONDS);
         assertThat(record).isNotNull();
-        assertThat(record.key()).isEqualTo("pk-test-123");
+        assertThat(record.key()).isEqualTo(pkEventId);
     }
 
     @Test
     @DisplayName("Should publish multiple events in order")
     void shouldPublishMultipleEventsInOrder() throws InterruptedException {
         // Given
-        publisher.publish(EventOutcome.builder().eventId("1").eventName("A").eventWinnerId("A").build());
-        publisher.publish(EventOutcome.builder().eventId("2").eventName("B").eventWinnerId("B").build());
+        publisher.publish(createOutcome("1", "A"));
+        publisher.publish(createOutcome("2", "B"));
 
         // Then
         var r1 = records.poll(5, TimeUnit.SECONDS);

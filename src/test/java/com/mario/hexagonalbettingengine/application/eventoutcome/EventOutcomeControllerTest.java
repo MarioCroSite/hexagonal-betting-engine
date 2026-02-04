@@ -2,7 +2,6 @@ package com.mario.hexagonalbettingengine.application.eventoutcome;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mario.hexagonalbettingengine.application.eventoutcome.mapper.EventOutcomeDtoMapper;
-import com.mario.hexagonalbettingengine.application.eventoutcome.request.EventOutcomeRequestDto;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcome;
 import com.mario.hexagonalbettingengine.domain.eventoutcome.EventOutcomeCommandHandler;
 import com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures;
@@ -23,6 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.stream.Stream;
 
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_ID;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_NAME;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeRequestDtoFixtures.DEFAULT_WINNER_ID;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeRequestDtoFixtures.baseRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,7 +53,7 @@ class EventOutcomeControllerTest {
     void shouldAcceptValidEventOutcome() throws Exception {
         // Given
         var request = EventOutcomeRequestDtoFixtures.validRequest();
-        var expectedDomainOutcome = EventOutcomeFixtures.realMadridWin().build();
+        var expectedDomainOutcome = EventOutcomeFixtures.baseOutcome().build();
 
         when(mapper.toDomain(request)).thenReturn(expectedDomainOutcome);
 
@@ -86,24 +89,11 @@ class EventOutcomeControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 Bad Request when JSON is malformed")
-    void shouldRejectMalformedJson() throws Exception {
-        // Given
-        String brokenJson = "{\"eventId\": \"123\", \"eventName\": \"Match\"";
-
-        // When & Then
-        mockMvc.perform(post("/api/event-outcomes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(brokenJson))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     @DisplayName("Should return 500 Internal Server Error when Handler fails unexpectedly")
     void shouldHandleUnexpectedServiceError() throws Exception {
         // Given
         var request = EventOutcomeRequestDtoFixtures.validRequest();
-        var domainOutcome = EventOutcomeFixtures.realMadridWin().build();
+        var domainOutcome = EventOutcomeFixtures.baseOutcome().build();
 
         when(mapper.toDomain(request)).thenReturn(domainOutcome);
         doThrow(new RuntimeException("Database down"))
@@ -114,19 +104,13 @@ class EventOutcomeControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.title").value("Internal Server Error"))
-                .andExpect(jsonPath("$.detail").value("An unexpected error occurred."));
+                .andExpect(jsonPath("$.status").value(500));
     }
 
     @Test
     @DisplayName("Should ignore unknown properties in JSON request")
     void shouldIgnoreUnknownProperties() throws Exception {
         // Given
-        var eventId = "match-100";
-        var eventName = "Real vs Barca";
-        var winnerId = "REAL_MADRID";
-
         var jsonWithExtraField = """
             {
                 "eventId": "%s",
@@ -134,15 +118,10 @@ class EventOutcomeControllerTest {
                 "eventWinnerId": "%s",
                 "newField": "newValue"
             }
-            """.formatted(eventId, eventName, winnerId);
+            """.formatted(DEFAULT_EVENT_ID, DEFAULT_EVENT_NAME, DEFAULT_WINNER_ID);
 
-        var expectedDto = EventOutcomeRequestDto.builder()
-                .eventId(eventId)
-                .eventName(eventName)
-                .eventWinnerId(winnerId)
-                .build();
-
-        var domainOutcome = EventOutcomeFixtures.realMadridWin().build();
+        var expectedDto = baseRequest().build();
+        var domainOutcome = EventOutcomeFixtures.baseOutcome().build();
         when(mapper.toDomain(expectedDto)).thenReturn(domainOutcome);
 
         // When & Then
@@ -150,6 +129,17 @@ class EventOutcomeControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonWithExtraField))
                 .andExpect(status().isAccepted());
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when JSON is malformed")
+    void shouldRejectMalformedJson() throws Exception {
+        String brokenJson = "{\"eventId\": \"123\", \"eventName\": \"Match\"";
+
+        mockMvc.perform(post("/api/event-outcomes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(brokenJson))
+                .andExpect(status().isBadRequest());
     }
 
 

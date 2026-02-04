@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.*;
-import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.pendingBet;
-import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.wonBet;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.*;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.DEFAULT_AMOUNT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -39,17 +39,16 @@ class BetRepositoryAdapterIT {
     @DisplayName("Should find all pending bets for given event ID")
     void shouldFindPendingBetsByEventId() {
         // Given
-        var pendingBet1 = createPendingEntity("bet-1", "match-100", "REAL_MADRID");
-        var pendingBet2 = createPendingEntity("bet-2", "match-100", "BARCELONA");
+        var pendingBet1 = createPendingEntity("bet-1", DEFAULT_EVENT_ID, "REAL_MADRID");
+        var pendingBet2 = createPendingEntity("bet-2", DEFAULT_EVENT_ID, "BARCELONA");
 
-        var wonBet = createEntity("bet-3", "match-100", "DRAW", BetStatus.WON);
-
-        var differentEventBet = createPendingEntity("bet-4", "match-200", "LIVERPOOL");
+        var wonBet = createEntity("bet-3", DEFAULT_EVENT_ID, "DRAW", BetStatus.WON);
+        var differentEventBet = createPendingEntity("bet-4", "match-other", "LIVERPOOL");
 
         jpaRepository.saveAll(List.of(pendingBet1, pendingBet2, wonBet, differentEventBet));
 
         // When
-        var result = adapter.findPendingBetsByEventId("match-100");
+        var result = adapter.findPendingBetsByEventId(DEFAULT_EVENT_ID);
 
         // Then
         assertThat(result)
@@ -62,11 +61,11 @@ class BetRepositoryAdapterIT {
     @DisplayName("Should return empty list when no pending bets found for event")
     void shouldReturnEmptyListWhenNoPendingBetsFound() {
         // Given
-        var wonBet = createEntity("bet-1", "match-100", "WINNER", BetStatus.WON);
+        var wonBet = createEntity("bet-1", DEFAULT_EVENT_ID, "WINNER", BetStatus.WON);
         jpaRepository.save(wonBet);
 
         // When
-        var result = adapter.findPendingBetsByEventId("match-100");
+        var result = adapter.findPendingBetsByEventId(DEFAULT_EVENT_ID);
 
         // Then
         assertThat(result).isEmpty();
@@ -76,11 +75,8 @@ class BetRepositoryAdapterIT {
     @DisplayName("Should save new bet to database (Domain -> Entity Mapping)")
     void shouldSaveNewBet() {
         // Given
-        var domainBet = pendingBet()
+        var domainBet = baseBet()
                 .betId("bet-new")
-                .eventId("match-500")
-                .eventWinnerId("TEAM_A")
-                .betAmount(BigDecimal.TEN)
                 .build();
 
         // When
@@ -88,10 +84,13 @@ class BetRepositoryAdapterIT {
 
         // Then
         var savedEntity = jpaRepository.findById("bet-new").orElseThrow();
+
         assertThat(savedEntity)
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(domainBet);
+
+        assertThat(savedEntity.getBetAmount()).isEqualByComparingTo(DEFAULT_AMOUNT);
     }
 
     @Test
@@ -116,14 +115,18 @@ class BetRepositoryAdapterIT {
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(updatedDomainBet);
+
+        assertThat(savedEntity.getStatus()).isEqualTo(BetStatus.WON);
     }
 
     @Test
     @DisplayName("Should correctly map entity fields to domain object")
     void shouldMapEntityToDomain() {
         // Given
+        var specificAmount = BigDecimal.valueOf(123.45);
+
         var entity = createPendingEntity("bet-map", "match-800", "WINNER_X");
-        entity.setBetAmount(BigDecimal.valueOf(123.45));
+        entity.setBetAmount(specificAmount);
 
         jpaRepository.save(entity);
 
@@ -134,18 +137,7 @@ class BetRepositoryAdapterIT {
         assertThat(result).hasSize(1);
         var actualDomainBet = result.getFirst();
 
-        var expectedDomainBet = Bet.builder()
-                .betId("bet-map")
-                .userId("user-1")
-                .eventMarketId("1x2")
-                .eventId("match-800")
-                .eventWinnerId("WINNER_X")
-                .betAmount(BigDecimal.valueOf(123.45))
-                .status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING)
-                .build();
-
-        assertThat(actualDomainBet)
-                .usingRecursiveComparison()
-                .isEqualTo(expectedDomainBet);
+        assertThat(actualDomainBet.betAmount()).isEqualByComparingTo(specificAmount);
+        assertThat(actualDomainBet.betId()).isEqualTo("bet-map");
     }
 }

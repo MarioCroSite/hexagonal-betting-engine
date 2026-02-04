@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.createOutcome;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EventOutcomeMapperTest {
@@ -17,7 +17,7 @@ class EventOutcomeMapperTest {
     @DisplayName("Should map Domain to Payload")
     void shouldMapDomainToPayload() {
         // Given
-        var domain = createOutcome("match-100", "REAL_MADRID");
+        var domain = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         // When
         var payload = mapper.toPayload(domain);
@@ -33,9 +33,9 @@ class EventOutcomeMapperTest {
     void shouldMapPayloadToDomain() {
         // Given
         var payload = EventOutcomePayload.builder()
-                .eventId("match-100")
-                .eventName("El Classico")
-                .eventWinnerId("REAL_MADRID")
+                .eventId(DEFAULT_EVENT_ID)
+                .eventName(DEFAULT_EVENT_NAME)
+                .eventWinnerId(REAL_MADRID)
                 .build();
 
         // When

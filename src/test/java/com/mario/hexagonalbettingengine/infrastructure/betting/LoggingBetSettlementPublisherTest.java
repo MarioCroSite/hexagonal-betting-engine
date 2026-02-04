@@ -16,10 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
-import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.createWonBet;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.wonBet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -58,12 +57,12 @@ class LoggingBetSettlementPublisherTest {
     void shouldLogPayloadToTopic() {
         // Given
         var topic = "rocket-topic-test";
-        var bet = createWonBet();
+        var bet = wonBet().build();
 
         var payload = BetPayload.builder()
-                .betId("bet-1")
+                .betId(bet.betId())
                 .status(WON)
-                .betAmount(BigDecimal.TEN)
+                .betAmount(bet.betAmount())
                 .settledAt(Instant.now())
                 .build();
 

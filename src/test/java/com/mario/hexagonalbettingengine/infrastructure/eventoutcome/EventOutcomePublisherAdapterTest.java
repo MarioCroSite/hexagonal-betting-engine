@@ -14,7 +14,7 @@ import org.springframework.kafka.support.SendResult;
 
 import java.util.concurrent.CompletableFuture;
 
-import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.createOutcome;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -39,16 +39,17 @@ class EventOutcomePublisherAdapterTest {
     void shouldPublishToKafkaSuccessfully() {
         // Given
         var topicName = "event-outcomes-topic";
-        var outcome = createOutcome("match-100", "REAL_MADRID");
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         var payload = EventOutcomePayload.builder()
-                .eventId("match-100")
-                .eventName("El Classico")
-                .eventWinnerId("REAL_MADRID")
+                .eventId(DEFAULT_EVENT_ID)
+                .eventName(DEFAULT_EVENT_NAME)
+                .eventWinnerId(REAL_MADRID)
                 .build();
 
         when(mapper.toPayload(outcome)).thenReturn(payload);
         when(properties.kafka().eventOutcomes().topic()).thenReturn(topicName);
+
         when(kafkaTemplate.send(anyString(), anyString(), any()))
                 .thenReturn(CompletableFuture.completedFuture(mock(SendResult.class)));
 
@@ -56,7 +57,7 @@ class EventOutcomePublisherAdapterTest {
         publisher.publish(outcome);
 
         // Then
-        verify(kafkaTemplate).send(topicName, "match-100", payload);
+        verify(kafkaTemplate).send(topicName, DEFAULT_EVENT_ID, payload);
     }
 
     @Test
@@ -64,9 +65,9 @@ class EventOutcomePublisherAdapterTest {
     void shouldHandleKafkaFailure() {
         // Given
         var topic = "event-outcomes-topic";
-        var eventId = "match-100";
+        var eventId = DEFAULT_EVENT_ID;
 
-        var outcome = createOutcome(eventId, "REAL_MADRID");
+        var outcome = createOutcome(eventId, REAL_MADRID);
         var payload = EventOutcomePayload.builder().eventId(eventId).build();
 
         when(mapper.toPayload(outcome)).thenReturn(payload);

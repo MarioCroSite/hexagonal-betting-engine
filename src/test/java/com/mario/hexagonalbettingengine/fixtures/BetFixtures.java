@@ -7,14 +7,17 @@ import java.math.BigDecimal;
 
 public class BetFixtures {
 
+    public static final String DEFAULT_BET_ID = "bet-default-123";
+    public static final BigDecimal DEFAULT_AMOUNT = new BigDecimal("100.00");
+
     public static Bet.BetBuilder baseBet() {
         return Bet.builder()
-                .betId("bet-default-123")
+                .betId(DEFAULT_BET_ID)
                 .userId("user-default-456")
                 .eventId("match-100")
                 .eventMarketId("1x2")
                 .eventWinnerId("REAL_MADRID")
-                .betAmount(new BigDecimal("100.00"))
+                .betAmount(DEFAULT_AMOUNT)
                 .status(BetStatus.PENDING);
     }
 
@@ -24,10 +27,6 @@ public class BetFixtures {
 
     public static Bet.BetBuilder wonBet() {
         return baseBet().status(BetStatus.WON);
-    }
-
-    public static Bet.BetBuilder lostBet() {
-        return baseBet().status(BetStatus.LOST);
     }
 
     public static Bet createBet(String betId, String eventId, String winnerId, BetStatus status) {
@@ -40,14 +39,6 @@ public class BetFixtures {
     }
 
     public static Bet createWonBet() {
-        return Bet.builder()
-                .betId("bet-1")
-                .userId("user-1")
-                .eventId("match-100")
-                .eventMarketId("1x2")
-                .eventWinnerId("REAL_MADRID")
-                .betAmount(BigDecimal.TEN)
-                .status(BetStatus.WON)
-                .build();
+        return wonBet().build();
     }
 }

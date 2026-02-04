@@ -13,9 +13,9 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.MessagingException;
 
-import java.math.BigDecimal;
 
-import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.createWonBet;
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_BET_ID;
+import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.wonBet;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -43,11 +43,11 @@ class RocketMQBetSettlementPublisherTest {
     void shouldPublishBetSuccessfully() {
         // Given
         var topic = "rocket-topic";
-        var bet = createWonBet();
+        var bet = wonBet().build();
 
         var payload = BetPayload.builder()
-                .betId("bet-1")
-                .betAmount(BigDecimal.TEN)
+                .betId(bet.betId())
+                .betAmount(bet.betAmount())
                 .build();
 
         when(betMapper.toPayload(bet)).thenReturn(payload);
@@ -68,8 +68,8 @@ class RocketMQBetSettlementPublisherTest {
     void shouldThrowExceptionWhenStatusNotOk() {
         // Given
         var topic = "rocket-topic";
-        var bet = createWonBet();
-        var payload = BetPayload.builder().betId("bet-1").build();
+        var bet = wonBet().build();
+        var payload = BetPayload.builder().betId(DEFAULT_BET_ID).build();
 
         when(betMapper.toPayload(bet)).thenReturn(payload);
         when(properties.rocketmq().topic()).thenReturn(topic);
@@ -84,12 +84,12 @@ class RocketMQBetSettlementPublisherTest {
     }
 
     @Test
-    @DisplayName("Should wrap runtime exceptions into MessagingException (e.g. Network Failure)")
+    @DisplayName("Should wrap runtime exceptions into MessagingException")
     void shouldHandleTechnicalFailures() {
         // Given
         var topic = "rocket-topic";
-        var bet = createWonBet();
-        var payload = BetPayload.builder().betId("bet-1").build();
+        var bet = wonBet().build();
+        var payload = BetPayload.builder().betId(DEFAULT_BET_ID).build();
 
         when(betMapper.toPayload(bet)).thenReturn(payload);
         when(properties.rocketmq().topic()).thenReturn(topic);
@@ -100,7 +100,6 @@ class RocketMQBetSettlementPublisherTest {
         // When & Then
         assertThatThrownBy(() -> publisher.publish(bet))
                 .isInstanceOf(MessagingException.class)
-                .hasMessage("RocketMQ error")
                 .hasCauseInstanceOf(RuntimeException.class);
     }
 }

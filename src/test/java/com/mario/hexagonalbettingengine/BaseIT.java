@@ -2,6 +2,7 @@ package com.mario.hexagonalbettingengine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures;
+import com.mario.hexagonalbettingengine.infrastructure.betting.BetEntity;
 import com.mario.hexagonalbettingengine.infrastructure.betting.BetJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,5 +35,14 @@ public abstract class BaseIT {
     protected void savePendingBet(String betId, String eventId, String winnerId) {
         var entity = BetEntityFixtures.createPendingEntity(betId, eventId, winnerId);
         betRepository.save(entity);
+    }
+
+    protected void saveBet(BetEntity entity) {
+        betRepository.save(entity);
+    }
+
+    protected BetEntity findBetInDb(String betId) {
+        return betRepository.findById(betId)
+                .orElseThrow(() -> new AssertionError("Bet not found in DB: " + betId));
     }
 }

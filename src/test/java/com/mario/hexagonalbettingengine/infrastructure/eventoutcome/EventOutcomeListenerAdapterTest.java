@@ -10,7 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.createOutcome;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -31,12 +31,12 @@ class EventOutcomeListenerAdapterTest {
     void shouldMapAndSettleOutcome() {
         // Given
         var payload = EventOutcomePayload.builder()
-                .eventId("match-100")
-                .eventName("El Classico")
-                .eventWinnerId("REAL_MADRID")
+                .eventId(DEFAULT_EVENT_ID)
+                .eventName(DEFAULT_EVENT_NAME)
+                .eventWinnerId(REAL_MADRID)
                 .build();
 
-        var domainOutcome = createOutcome("match-100", "REAL_MADRID");
+        var domainOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
         when(mapper.toDomain(payload)).thenReturn(domainOutcome);
 
         // When
@@ -52,13 +52,15 @@ class EventOutcomeListenerAdapterTest {
     void shouldHandleNullWinner() {
         // Given
         var payload = EventOutcomePayload.builder()
-                .eventId("match-999")
+                .eventId(DEFAULT_EVENT_ID)
                 .eventName("Cancelled")
                 .eventWinnerId(null)
                 .build();
 
-        var domainOutcome = createOutcome("match-999", "REAL_MADRID")
-                .toBuilder().eventWinnerId(null).build();
+        var domainOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID)
+                .toBuilder()
+                .eventWinnerId(null)
+                .build();
 
         when(mapper.toDomain(payload)).thenReturn(domainOutcome);
 
@@ -73,17 +75,23 @@ class EventOutcomeListenerAdapterTest {
     @DisplayName("Should propagate exception if settlement fails (Critical for Kafka Retry)")
     void shouldPropagateException() {
         // Given
-        var payload = EventOutcomePayload.builder().eventId("match-1").build();
-        var domainOutcome = createOutcome("match-1", "A");
+        var payload = EventOutcomePayload.builder()
+                .eventId(DEFAULT_EVENT_ID)
+                .eventName(DEFAULT_EVENT_NAME)
+                .eventWinnerId(REAL_MADRID)
+                .build();
+
+        var domainOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         when(mapper.toDomain(payload)).thenReturn(domainOutcome);
 
-        doThrow(new RuntimeException("Settlement failed"))
+        doThrow(new RuntimeException("Settlement logic failed"))
                 .when(betSettlement).settle(domainOutcome);
 
         // When & Then
         assertThrows(RuntimeException.class, () ->
                 listener.onEventOutcome(payload)
         );
+        verify(mapper).toDomain(payload);
     }
 }

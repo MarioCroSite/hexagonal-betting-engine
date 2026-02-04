@@ -42,13 +42,13 @@ class BetSettlementServiceTest {
     @DisplayName("Should settle multiple bets (mixed WON/LOST) and publish events")
     void shouldSettleMultipleBetsCorrectly() {
         // Given
-        var outcome = createOutcome("match-100", "REAL_MADRID");
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
-        var bet1 = createBet("bet-1", "match-100", "REAL_MADRID", PENDING);
-        var bet2 = createBet("bet-2", "match-100", "BARCELONA", PENDING);
-        var bet3 = createBet("bet-3", "match-100", "REAL_MADRID", PENDING);
+        var bet1 = createBet("bet-1", DEFAULT_EVENT_ID, REAL_MADRID, PENDING);
+        var bet2 = createBet("bet-2", DEFAULT_EVENT_ID, "BARCELONA", PENDING);
+        var bet3 = createBet("bet-3", DEFAULT_EVENT_ID, REAL_MADRID, PENDING);
 
-        given(repository.findPendingBetsByEventId("match-100"))
+        given(repository.findPendingBetsByEventId(DEFAULT_EVENT_ID))
                 .willReturn(List.of(bet1, bet2, bet3));
 
         // When
@@ -77,17 +77,15 @@ class BetSettlementServiceTest {
     @DisplayName("Should preserve bet details (amount, user) when settling")
     void shouldPreserveBetDetails() {
         // Given
-        var outcome = createOutcome("match-100", "REAL_MADRID");
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
-        var originalBet = pendingBet()
+        var originalBet = baseBet()
                 .betId("bet-99")
-                .eventId("match-100")
-                .eventWinnerId("REAL_MADRID")
-                .betAmount(new BigDecimal("100.50"))
                 .userId("special-user")
+                .betAmount(new BigDecimal("100.50"))
                 .build();
 
-        given(repository.findPendingBetsByEventId("match-100"))
+        given(repository.findPendingBetsByEventId(DEFAULT_EVENT_ID))
                 .willReturn(List.of(originalBet));
 
         // When
@@ -108,9 +106,9 @@ class BetSettlementServiceTest {
     @DisplayName("Should do nothing when no pending bets are found")
     void shouldDoNothingWhenNoBetsFound() {
         // Given
-        var outcome = createOutcome("match-100", "REAL_MADRID");
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
-        given(repository.findPendingBetsByEventId("match-100"))
+        given(repository.findPendingBetsByEventId(DEFAULT_EVENT_ID))
                 .willReturn(emptyList());
 
         // When
@@ -125,12 +123,12 @@ class BetSettlementServiceTest {
     @DisplayName("Should propagate exception if repository fails")
     void shouldPropagateExceptionWhenRepositoryFails() {
         // Given
-        var outcome = createOutcome("match-100", "REAL_MADRID");
-        var bet = createBet("bet-1", "match-100", "REAL_MADRID", PENDING);
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
+        var bet = createBet("bet-1", DEFAULT_EVENT_ID, REAL_MADRID, PENDING);
 
-        given(repository.findPendingBetsByEventId("match-100")).willReturn(List.of(bet));
+        given(repository.findPendingBetsByEventId(DEFAULT_EVENT_ID)).willReturn(List.of(bet));
 
-        var expectedSettledBet = createBet("bet-1", "match-100", "REAL_MADRID", WON);
+        var expectedSettledBet = createBet("bet-1", DEFAULT_EVENT_ID, REAL_MADRID, WON);
         doThrow(new RuntimeException("DB Error")).when(repository).save(expectedSettledBet);
 
         // When & Then
@@ -142,12 +140,12 @@ class BetSettlementServiceTest {
     @DisplayName("Should propagate exception if publisher fails")
     void shouldPropagateExceptionWhenPublisherFails() {
         // Given
-        var outcome = createOutcome("match-100", "REAL_MADRID");
-        var bet = createBet("bet-1", "match-100", "REAL_MADRID", PENDING);
+        var outcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
+        var bet = createBet("bet-1", DEFAULT_EVENT_ID, REAL_MADRID, PENDING);
 
-        given(repository.findPendingBetsByEventId("match-100")).willReturn(List.of(bet));
+        given(repository.findPendingBetsByEventId(DEFAULT_EVENT_ID)).willReturn(List.of(bet));
 
-        var expectedSettledBet = createBet("bet-1", "match-100", "REAL_MADRID", WON);
+        var expectedSettledBet = createBet("bet-1", DEFAULT_EVENT_ID, REAL_MADRID, WON);
         doThrow(new RuntimeException("Kafka Error")).when(publisher).publish(expectedSettledBet);
 
         // When & Then

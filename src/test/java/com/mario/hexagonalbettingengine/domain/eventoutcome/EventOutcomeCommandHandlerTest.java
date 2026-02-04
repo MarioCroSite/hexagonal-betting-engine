@@ -25,7 +25,7 @@ class EventOutcomeCommandHandlerTest {
     @DisplayName("Should strictly delegate event outcome to publisher")
     void shouldPublishEventOutcomeWhenHandled() {
         // Given
-        var eventOutcome = createOutcome("match-100", "REAL_MADRID");
+        var eventOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         // When
         handler.handle(eventOutcome);
@@ -38,7 +38,7 @@ class EventOutcomeCommandHandlerTest {
     @DisplayName("Should handle event outcome even if winner is null (Draw or Cancelled)")
     void shouldHandleEventOutcomeWithNullWinner() {
         // Given
-        var eventOutcome = createOutcome("match-200", "REAL_MADRID")
+        var eventOutcome = createOutcome("match-200", REAL_MADRID)
                 .toBuilder()
                 .eventWinnerId(null)
                 .build();
@@ -54,7 +54,7 @@ class EventOutcomeCommandHandlerTest {
     @DisplayName("Should propagate exception when publisher fails (e.g. Messaging System Down)")
     void shouldPropagateExceptionWhenPublisherFails() {
         // Given
-        var eventOutcome = createOutcome("match-100", "REAL_MADRID");
+        var eventOutcome = createOutcome(DEFAULT_EVENT_ID, REAL_MADRID);
 
         doThrow(new RuntimeException("Messaging system unavailable"))
                 .when(publisher).publish(eventOutcome);

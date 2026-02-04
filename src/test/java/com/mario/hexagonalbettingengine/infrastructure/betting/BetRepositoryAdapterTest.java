@@ -8,9 +8,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.util.List;
 
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_EVENT_ID;
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.baseEntity;
 import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,42 +33,30 @@ class BetRepositoryAdapterTest {
     @DisplayName("Should find pending bets by calling JpaRepository and mapping results")
     void shouldFindPendingBetsByEventId() {
         // Given
-        var eventId = "match-100";
-        var entity = BetEntity.builder()
-                .betId("bet-1")
-                .userId("u-1")
-                .eventId(eventId)
-                .eventMarketId("1x2")
-                .eventWinnerId("REAL")
-                .betAmount(BigDecimal.TEN)
-                .status(BetStatus.PENDING)
-                .build();
+        var entity = baseEntity().status(BetStatus.PENDING).build();
+        var domainBet = baseBet().status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING).build();
 
-        var domainBet = pendingBet().betId("bet-1").eventId(eventId).build();
-
-        when(jpaRepository.findByEventIdAndStatus(eventId, BetStatus.PENDING))
+        when(jpaRepository.findByEventIdAndStatus(DEFAULT_EVENT_ID, BetStatus.PENDING))
                 .thenReturn(List.of(entity));
         when(mapper.toDomain(entity)).thenReturn(domainBet);
 
         // When
-        var result = adapter.findPendingBetsByEventId(eventId);
+        var result = adapter.findPendingBetsByEventId(DEFAULT_EVENT_ID);
 
         // Then
         assertThat(result).containsExactly(domainBet);
-        verify(jpaRepository).findByEventIdAndStatus(eventId, BetStatus.PENDING);
+        verify(jpaRepository).findByEventIdAndStatus(DEFAULT_EVENT_ID, BetStatus.PENDING);
     }
 
     @Test
     @DisplayName("Should return empty list if no entities found")
     void shouldReturnEmptyList() {
         // Given
-        var eventId = "match-999";
-
-        when(jpaRepository.findByEventIdAndStatus(eventId, BetStatus.PENDING))
+        when(jpaRepository.findByEventIdAndStatus(DEFAULT_EVENT_ID, BetStatus.PENDING))
                 .thenReturn(emptyList());
 
         // When
-        var result = adapter.findPendingBetsByEventId(eventId);
+        var result = adapter.findPendingBetsByEventId(DEFAULT_EVENT_ID);
 
         // Then
         assertThat(result).isEmpty();
@@ -78,12 +67,8 @@ class BetRepositoryAdapterTest {
     @DisplayName("Should save bet by mapping to entity and calling JpaRepository")
     void shouldSaveBet() {
         // Given
-        var betId = "bet-1";
-
-        var domainBet = pendingBet().betId(betId).build();
-
-        var entity = new BetEntity();
-        entity.setBetId(betId);
+        var domainBet = baseBet().build();
+        var entity = baseEntity().build();
 
         when(mapper.toEntity(domainBet)).thenReturn(entity);
 

@@ -2,6 +2,7 @@ package com.mario.hexagonalbettingengine;
 
 import com.mario.hexagonalbettingengine.infrastructure.betting.BetStatus;
 import com.mario.hexagonalbettingengine.infrastructure.betting.payload.BetPayload;
+import com.mario.hexagonalbettingengine.infrastructure.config.MessagingProperties;
 import com.mario.hexagonalbettingengine.infrastructure.eventoutcome.payload.EventOutcomePayload;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -19,6 +20,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_WINNER_ID;
+import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.createEntity;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_ID;
+import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@EmbeddedKafka(partitions = 1, topics = {"event-outcomes-test"})
+@EmbeddedKafka(partitions = 1, topics = {"${app.messaging.kafka.event-outcomes.topic}"})
 @SpringBootTest(
         webEnvironment = RANDOM_PORT,
         properties = {
@@ -37,12 +42,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @DisplayName("Bet Settlement End-to-End Integration Tests")
 class BetSettlementEndToEndIT extends BaseIT {
 
-    private static final String KAFKA_TOPIC = "event-outcomes-test";
-    private static final String ROCKETMQ_TOPIC = "bet-settlements";
     private static final Duration ASYNC_VERIFICATION_TIMEOUT = Duration.ofSeconds(10);
 
     @Autowired
     private KafkaTemplate<String, EventOutcomePayload> kafkaTemplate;
+
+    @Autowired
+    private MessagingProperties messagingProperties;
 
     @MockitoBean
     private RocketMQTemplate rocketMQTemplate;
@@ -51,7 +57,8 @@ class BetSettlementEndToEndIT extends BaseIT {
     void setUpMocks() {
         var mockResult = new SendResult();
         mockResult.setSendStatus(SendStatus.SEND_OK);
-        when(rocketMQTemplate.syncSend(eq(ROCKETMQ_TOPIC), any(BetPayload.class)))
+
+        when(rocketMQTemplate.syncSend(eq(messagingProperties.rocketmq().topic()), any(BetPayload.class)))
                 .thenReturn(mockResult);
     }
 
@@ -59,20 +66,18 @@ class BetSettlementEndToEndIT extends BaseIT {
     @DisplayName("Should process full settlement flow: Kafka → DB → RocketMQ")
     void shouldProcessCompleteSettlementFlow() {
         // Given
-        var betId = "bet-e2e-001";
-        var eventId = "match-el-classico";
-        var predictedWinner = "BARCELONA";
+        var betId = "bet-e2e-1";
 
-        savePendingBet(betId, eventId, predictedWinner);
+        savePendingBet(betId, DEFAULT_EVENT_ID, DEFAULT_WINNER_ID);
 
         var eventOutcome = new EventOutcomePayload(
-                eventId,
-                "El Classico: Barcelona vs Real Madrid",
-                predictedWinner
+                DEFAULT_EVENT_ID,
+                DEFAULT_EVENT_NAME,
+                DEFAULT_WINNER_ID
         );
 
         // When
-        kafkaTemplate.send(KAFKA_TOPIC, eventOutcome);
+        kafkaTemplate.send(messagingProperties.kafka().eventOutcomes().topic(), eventOutcome);
 
         // Then
         Awaitility.await()
@@ -82,20 +87,25 @@ class BetSettlementEndToEndIT extends BaseIT {
                     var settledBet = betRepository.findById(betId).orElseThrow(
                             () -> new AssertionError("Bet not found: " + betId)
                     );
-                    assertThat(settledBet.getStatus()).isEqualTo(BetStatus.WON);
+
+                    var expectedEntity = createEntity(betId, DEFAULT_EVENT_ID, DEFAULT_WINNER_ID, BetStatus.WON);
+
+                    assertThat(settledBet)
+                            .usingRecursiveComparison()
+                            .isEqualTo(expectedEntity);
                 });
 
         var payloadCaptor = ArgumentCaptor.forClass(BetPayload.class);
 
         verify(rocketMQTemplate, timeout(5000))
-                .syncSend(eq(ROCKETMQ_TOPIC), payloadCaptor.capture());
+                .syncSend(eq(messagingProperties.rocketmq().topic()), payloadCaptor.capture());
 
         var expectedPayload = BetPayload.builder()
                 .betId(betId)
                 .userId("user-1")
-                .eventId(eventId)
+                .eventId(DEFAULT_EVENT_ID)
                 .eventMarketId("1x2")
-                .eventWinnerId(predictedWinner)
+                .eventWinnerId(DEFAULT_WINNER_ID)
                 .betAmount(new java.math.BigDecimal("100.00"))
                 .status(com.mario.hexagonalbettingengine.infrastructure.betting.payload.BetStatus.WON)
                 .build();
