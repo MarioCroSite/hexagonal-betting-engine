@@ -1,13 +1,6 @@
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  flyway:
-    enabled: true
-    clean-disabled: false
-    locations: classpath:db/migration
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers}
     consumer:
@@ -22,16 +15,11 @@ spring:
         request.timeout.ms: 1000
         linger.ms: 0
 
-rocketmq:
-  name-server: localhost:9876
-  producer:
-    group: test-producer-group
-
 app:
   messaging:
     rocketmq:
       enabled: false
-      topic: bet-settlements
+      topic: bet-settlements-test
       producer-group: test-group
     kafka:
       event-outcomes:
