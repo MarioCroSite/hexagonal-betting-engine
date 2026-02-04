@@ -36,4 +36,22 @@ public class BetEntityFixtures {
                 .status(status)
                 .build();
     }
+
+    public static BetEntity createEntity(String betId, String eventId, String predictedWinner, BetStatus status) {
+        return baseEntity()
+                .betId(betId)
+                .eventId(eventId)
+                .eventWinnerId(predictedWinner)
+                .status(status)
+                .build();
+    }
+
+    public static BetEntity createPendingEntity(String betId, String eventId, String predictedWinner) {
+        return baseEntity()
+                .betId(betId)
+                .eventId(eventId)
+                .eventWinnerId(predictedWinner)
+                .status(BetStatus.PENDING)
+                .build();
+    }
 }

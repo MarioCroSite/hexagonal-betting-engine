@@ -27,7 +27,7 @@ public class EventOutcomeFixtures {
         return baseOutcome()
                 .eventId("match-200")
                 .eventName("Liverpool vs Milan")
-                .eventWinnerId("LIVERPOOL"); // Default pobjednik za ovaj meč
+                .eventWinnerId("LIVERPOOL");
     }
 
     public static EventOutcome createOutcome(String eventId, String winnerId) {
