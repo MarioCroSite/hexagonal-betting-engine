@@ -174,6 +174,8 @@ graph LR
 src/
 ├── main/
 │   ├── java/com/mario/hexagonalbettingengine/
+│   │   ├── HexagonalBettingEngineApplication.java  # Main Spring Boot application
+│   │   │
 │   │   ├── domain/                      # 🟢 Domain Layer (Core Business Logic)
 │   │   │   ├── betting/
 │   │   │   │   ├── Bet.java            # Domain entity
@@ -183,44 +185,92 @@ src/
 │   │   │   │   ├── BetSettlementService.java  # Domain service
 │   │   │   │   └── BetSettlementPublisher.java # Port (interface)
 │   │   │   └── eventoutcome/
-│   │   │       ├── EventOutcome.java
-│   │   │       └── EventOutcomeCommandHandler.java
+│   │   │       ├── EventOutcome.java   # Domain entity
+│   │   │       ├── EventOutcomeCommandHandler.java
+│   │   │       └── EventOutcomePublisher.java  # Port (interface)
 │   │   │
 │   │   ├── application/                 # 🔵 Application Layer (Use Cases)
 │   │   │   ├── eventoutcome/
 │   │   │   │   ├── EventOutcomeController.java
 │   │   │   │   ├── request/
+│   │   │   │   │   └── EventOutcomeRequestDto.java
 │   │   │   │   └── mapper/
+│   │   │   │       └── EventOutcomeDtoMapper.java
 │   │   │   └── GlobalExceptionHandler.java
 │   │   │
 │   │   └── infrastructure/              # 🟠 Infrastructure Layer (Adapters)
 │   │       ├── betting/
 │   │       │   ├── BetEntity.java       # JPA entity
+│   │       │   ├── BetStatus.java       # Infrastructure enum
 │   │       │   ├── BetJpaRepository.java
-│   │       │   ├── BetRepositoryAdapter.java  # Port implementation
+│   │       │   ├── BetRepositoryAdapter.java
 │   │       │   ├── RocketMQBetSettlementPublisher.java
 │   │       │   ├── LoggingBetSettlementPublisher.java
-│   │       │   └── mapper/
+│   │       │   ├── mapper/
+│   │       │   │   └── BetMapper.java
+│   │       │   └── payload/
+│   │       │       ├── BetPayload.java
+│   │       │       └── BetStatus.java
 │   │       ├── eventoutcome/
 │   │       │   ├── EventOutcomeListenerAdapter.java  # Kafka consumer
 │   │       │   ├── EventOutcomePublisherAdapter.java # Kafka producer
-│   │       │   └── mapper/
+│   │       │   ├── mapper/
+│   │       │   │   └── EventOutcomeMapper.java
+│   │       │   └── payload/
+│   │       │       └── EventOutcomePayload.java
 │   │       └── config/
+│   │           ├── JacksonConfig.java
 │   │           ├── KafkaConfig.java
 │   │           ├── KafkaTopicConfig.java
 │   │           └── MessagingProperties.java
 │   │
 │   └── resources/
 │       ├── application.yml
-│       ├── application-test.yml
 │       └── db/migration/
-│           └── V1__init_schema.sql
+│           ├── V1__create_bets_table.sql
+│           └── V2__seed_initial_bets.sql
 │
 └── test/
     ├── java/com/mario/hexagonalbettingengine/
-    │   ├── domain/                      # Unit tests
-    │   ├── infrastructure/              # Integration tests
-    │   └── BetSettlementEndToEndIT.java # E2E test
+    │   ├── BaseIT.java                  # Base integration test class
+    │   ├── BetSettlementEndToEndIT.java # E2E test
+    │   │
+    │   ├── domain/                      # 🟢 Domain unit tests
+    │   │   ├── betting/
+    │   │   │   ├── BetTest.java
+    │   │   │   └── BetSettlementServiceTest.java
+    │   │   └── eventoutcome/
+    │   │       └── EventOutcomeCommandHandlerTest.java
+    │   │
+    │   ├── application/                 # 🔵 Application unit/integration tests
+    │   │   └── eventoutcome/
+    │   │       ├── EventOutcomeControllerIT.java
+    │   │       ├── EventOutcomeControllerTest.java
+    │   │       └── mapper/
+    │   │           └── EventOutcomeDtoMapperTest.java
+    │   │
+    │   ├── infrastructure/              # 🟠 Infrastructure unit/integration tests
+    │   │   ├── betting/
+    │   │   │   ├── BetRepositoryAdapterIT.java
+    │   │   │   ├── BetRepositoryAdapterTest.java
+    │   │   │   ├── LoggingBetSettlementPublisherTest.java
+    │   │   │   ├── RocketMQBetSettlementPublisherTest.java
+    │   │   │   └── mapper/
+    │   │   │       └── BetMapperTest.java
+    │   │   └── eventoutcome/
+    │   │       ├── EventOutcomeKafkaConsumerIT.java
+    │   │       ├── EventOutcomeKafkaProducerIT.java
+    │   │       ├── EventOutcomeListenerAdapterTest.java
+    │   │       ├── EventOutcomePublisherAdapterTest.java
+    │   │       └── mapper/
+    │   │           └── EventOutcomeMapperTest.java
+    │   │
+    │   └── fixtures/                    # Test data builders
+    │       ├── BetEntityFixtures.java
+    │       ├── BetFixtures.java
+    │       ├── EventOutcomeFixtures.java
+    │       └── EventOutcomeRequestDtoFixtures.java
+    │
     └── resources/
         └── application-test.yml
 ```
@@ -270,6 +320,48 @@ The application will start on `http://localhost:8080`
 
 ---
 
+## ⚙️ Configuration
+
+### RocketMQ Operating Modes
+
+The system supports two different modes for publishing bet settlements using **Conditional Bean Registration** (`@ConditionalOnProperty`), allowing you to toggle between logging-only mode and real RocketMQ connectivity.
+
+#### Toggle Switch
+
+In `application.yml`, control whether the application communicates with a real RocketMQ broker:
+
+```yaml
+app:
+  messaging:
+    rocketmq:
+      enabled: false # false = Logging only, true = Real RocketMQ
+```
+
+| `enabled` | Active Implementation | Behavior |
+|-----------|----------------------|----------|
+| `false` | `LoggingBetSettlementPublisher` | Settlements are printed to console/logs. Best for rapid development without Docker stack. |
+| `true` | `RocketMQBetSettlementPublisher` | Messages sent to live RocketMQ broker. Required for full end-to-end testing. |
+
+### RocketMQ Networking Setup
+
+⚠️ **Important:** RocketMQ requires specific networking setup to bridge Docker containers and your host machine.
+
+**Version Choice:**
+- Uses RocketMQ **4.9.7** for maximum stability and compatibility with Dashboard
+- Avoids the complexity of gRPC Proxy introduced in version 5.x
+
+**The `brokerIP1` Requirement:**
+- The RocketMQ broker must broadcast an IP address reachable by your application
+- Configured in `rocketmq/broker.conf` file
+- **Recommendation:** Use your actual LAN IP (e.g., `192.168.x.x`) or `host.docker.internal`
+- This ensures the application on your host can "handshake" with the broker inside Docker
+
+**Troubleshooting:**
+- If you encounter connection timeouts, verify that your machine's IP matches the one in `broker.conf`
+- Check Docker network configuration: `docker network inspect betting-net`
+
+---
+
 ## 📚 API Documentation
 
 ### Swagger UI
@@ -303,17 +395,25 @@ curl -X POST http://localhost:8080/api/event-outcomes \
 HTTP/1.1 202 Accepted
 ```
 
-#### 📊 Seeded Test Data
+### 🧪 Run Test Scenarios
 
-The application comes with **pre-seeded pending bets** via Flyway migration (`V2__seed_initial_bets.sql`):
+The application comes with **pre-seeded pending bets** via Flyway migration (`V2__seed_initial_bets.sql`). Below are three realistic test scenarios to demonstrate the end-to-end bet settlement flow:
 
-| Event ID | Event Name | Seeded Bets | Available Winners |
-|----------|------------|-------------|-------------------|
-| `match-100` | Real Madrid vs Barcelona | 4 bets | `REAL_MADRID`, `BARCELONA`, `DRAW` |
-| `match-200` | Liverpool vs Milan | 3 bets | `LIVERPOOL`, `MILAN` |
-| `match-300` | Lakers vs Celtics | 3 bets | `LAKERS`, `CELTICS` |
+---
 
-**Example: Settle match-100 bets**
+#### Scenario 1: El Clásico ⚽
+
+**Context:** Spain's biggest football rivalry - Real Madrid vs Barcelona
+
+**Seeded Bets:**
+| Bet ID | User | Predicted Winner | Amount | Status |
+|--------|------|------------------|--------|--------|
+| `b-001` | user-1 | REAL_MADRID | €10.00 | PENDING |
+| `b-002` | user-2 | BARCELONA | €25.50 | PENDING |
+| `b-003` | user-3 | DRAW | €5.00 | PENDING |
+| `b-004` | user-4 | REAL_MADRID | €100.00 | PENDING |
+
+**Trigger Event Outcome:**
 ```bash
 curl -X POST http://localhost:8080/api/event-outcomes \
   -H "Content-Type: application/json" \
@@ -324,11 +424,75 @@ curl -X POST http://localhost:8080/api/event-outcomes \
   }'
 ```
 
-This will:
-- Find 4 pending bets for `match-100`
-- Mark 2 bets as **WON** (bet-ids: `b-001`, `b-004`)
-- Mark 2 bets as **LOST** (bet-ids: `b-002`, `b-003`)
-- Publish 4 settlement notifications to RocketMQ
+**Expected Result:**
+- ✅ **2 WON:** `b-001`, `b-004` (predicted REAL_MADRID correctly)
+- ❌ **2 LOST:** `b-002`, `b-003` (predicted BARCELONA and DRAW)
+- 📤 4 settlement messages published to RocketMQ
+
+---
+
+#### Scenario 2: Champions League Thriller 🏆
+
+**Context:** European club football's elite competition - Liverpool vs AC Milan
+
+**Seeded Bets:**
+| Bet ID | User | Predicted Winner | Amount | Status |
+|--------|------|------------------|--------|--------|
+| `b-005` | user-1 | LIVERPOOL | €15.00 | PENDING |
+| `b-006` | user-5 | MILAN | €40.00 | PENDING |
+| `b-007` | user-2 | LIVERPOOL | €12.00 | PENDING |
+
+**Trigger Event Outcome:**
+```bash
+curl -X POST http://localhost:8080/api/event-outcomes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventId": "match-200",
+    "eventName": "Liverpool vs Milan",
+    "eventWinnerId": "MILAN"
+  }'
+```
+
+**Expected Result:**
+- ✅ **1 WON:** `b-006` (predicted MILAN correctly)
+- ❌ **2 LOST:** `b-005`, `b-007` (predicted LIVERPOOL)
+- 📤 3 settlement messages published to RocketMQ
+
+---
+
+#### Scenario 3: NBA Showdown 🏀
+
+**Context:** Historic basketball rivalry - Los Angeles Lakers vs Boston Celtics
+
+**Seeded Bets:**
+| Bet ID | User | Predicted Winner | Amount | Status |
+|--------|------|------------------|--------|--------|
+| `b-008` | user-6 | LAKERS | $50.00 | PENDING |
+| `b-009` | user-7 | CELTICS | $30.00 | PENDING |
+| `b-010` | user-1 | LAKERS | $20.00 | PENDING |
+
+**Trigger Event Outcome:**
+```bash
+curl -X POST http://localhost:8080/api/event-outcomes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventId": "match-300",
+    "eventName": "Lakers vs Celtics",
+    "eventWinnerId": "LAKERS"
+  }'
+```
+
+**Expected Result:**
+- ✅ **2 WON:** `b-008`, `b-010` (predicted LAKERS correctly)
+- ❌ **1 LOST:** `b-009` (predicted CELTICS)
+- 📤 3 settlement messages published to RocketMQ
+
+---
+
+> **💡 Tip:** After triggering any scenario, verify settlements in:
+> - **H2 Console** (`http://localhost:8080/h2-console`) - Query: `SELECT * FROM bets WHERE event_id = 'match-100';`
+> - **RocketMQ Dashboard** (`http://localhost:8082`) - Check `bet-settlements` topic messages
+> - **Application Logs** - Watch for settlement processing confirmations
 
 ---
 
@@ -508,5 +672,42 @@ public record MessagingProperties(
     KafkaConfig kafka
 ) { }
 ```
+
+---
+
+## 🚀 Future Improvements
+
+This assignment focuses on the **Event Outcome Settlement** flow, demonstrating how bets are automatically settled when sports events conclude. To fully support a production betting platform, the following enhancements are planned:
+
+### 1. **Bet Management API**
+
+Currently, bets are pre-seeded via Flyway migrations for demonstration purposes. A production system would require:
+
+#### `POST /api/bets` - Place a Bet
+
+**Request:**
+```json
+{
+  "userId": "user-123",
+  "eventId": "match-500",
+  "eventMarketId": "1x2",
+  "eventWinnerId": "REAL_MADRID",
+  "betAmount": 50.00
+}
+```
+
+**Response:**
+```json
+{
+  "betId": "b-101",
+  "status": "PENDING",
+  "placedAt": "2026-02-05T14:30:00Z"
+}
+```
+
+**Domain Considerations:**
+- **Validation:** Ensure event exists, market is open, bet amount meets minimum requirements
+- **Idempotency:** Prevent duplicate bets using idempotency keys
+- **Balance Check:** Integrate with wallet service to verify user funds
 
 ---
