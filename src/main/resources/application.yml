@@ -36,7 +36,6 @@ spring:
         enable.idempotence: true
         linger.ms: 5
         delivery.timeout.ms: 60000
-        retries: 2147483647
         retry.backoff.ms: 500
     consumer:
       group-id: hexagonal-betting-engine
