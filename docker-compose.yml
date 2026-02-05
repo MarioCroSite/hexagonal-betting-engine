@@ -87,6 +87,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   hexagonal-betting-engine-app:
+    image: hexagonal-betting-engine:latest
     build:
       context: .
       dockerfile: Dockerfile
