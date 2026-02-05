@@ -85,3 +85,26 @@ services:
       - JAVA_OPTS=-Drocketmq.namesrv.addr=rocketmq-nameserver:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  hexagonal-betting-engine-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: betting_app
+    profiles:
+      - full-stack
+    networks:
+      - betting-net
+    depends_on:
+      - kafka
+      - rocketmq-nameserver
+      - rocketmq-broker
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: betting_kafka:29092
+      ROCKETMQ_NAME_SERVER: rocketmq-nameserver:9876
+      APP_MESSAGING_ROCKETMQ_ENABLED: "false"
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

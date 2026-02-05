@@ -281,23 +281,26 @@ src/
 
 ### Prerequisites
 
-- **Docker** 🐳
-- **Docker Compose** 🐙
-- **Java 21**
+- **Docker & Docker Compose** 🐳
+- **Java 21** (for local development)
 - **Gradle 9+** (optional, wrapper included)
 
-### Quick Start
-
-#### 1️⃣ Clone the Repository
+### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/MarioCroSite/hexagonal-betting-engine.git
 cd hexagonal-betting-engine
 ```
 
-#### 2️⃣ Start Infrastructure Services
+---
 
-Start Kafka, RocketMQ, and their UIs using Docker Compose:
+### ⚡ Option 1: Local Development (Recommended)
+
+**Best for:** Daily development, debugging, and rapid iteration with hot reload.
+
+#### 1️⃣ Start Infrastructure Services
+
+Start Kafka, RocketMQ, and their monitoring UIs using Docker Compose:
 
 ```bash
 docker-compose up -d
@@ -310,13 +313,52 @@ This will start:
 - **RocketMQ Broker** on `localhost:10911`
 - **RocketMQ Dashboard** on `http://localhost:8082`
 
-#### 3️⃣ Run the Application
+#### 2️⃣ Run Application Locally
 
 ```bash
 ./gradlew bootRun
 ```
 
-The application will start on `http://localhost:8080`
+- Application starts on `http://localhost:8080`
+- H2 Console available at `http://localhost:8080/h2-console`
+- Swagger UI available at `http://localhost:8080/swagger-ui/index.html`
+- Changes reload automatically with Spring DevTools
+
+---
+
+### 🐳 Option 2: Full Docker Stack (Advanced)
+
+**Best for:** Production-like environment, E2E testing, CI/CD pipelines, and demonstrations.
+
+#### 1️⃣ Build Application Docker Image
+
+```bash
+docker build -t hexagonal-betting-engine:latest .
+```
+
+**Image Details:**
+- Multi-stage build (Eclipse Temurin 21 → Amazon Corretto 21)
+- Optimized layer caching for dependencies
+- Alpine-based for minimal footprint
+- JVM tuned for containerized environments
+
+#### 2️⃣ Start Full Stack
+
+```bash
+docker-compose --profile full-stack up -d
+```
+
+This will start **all services** including the application container.
+
+#### 3️⃣ View Application Logs
+
+```bash
+docker logs -f betting_app
+```
+
+- Application containerized and running on `http://localhost:8080`
+- All services isolated in Docker network `betting-net`
+- Production-ready setup with container health checks
 
 ---
 
