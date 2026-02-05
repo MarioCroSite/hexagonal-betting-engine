@@ -6,6 +6,7 @@
 
 > A distributed betting settlement system built with **Spring Boot 4**, **Kafka**, and **RocketMQ** using **Hexagonal Architecture**.
 
+[![CI](https://github.com/MarioCroSite/hexagonal-betting-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/MarioCroSite/hexagonal-betting-engine/actions)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Kafka](https://img.shields.io/badge/Kafka%20Client-4.1.1-black.svg)](https://kafka.apache.org/)
@@ -42,6 +43,16 @@ The **Hexagonal Betting Engine** is an event-driven microservice that processes 
 - ✅ **Comprehensive Testing** - Unit tests, integration tests, and E2E tests
 - ✅ **In-Memory Database** - H2 for development and testing
 - ✅ **OpenAPI Documentation** - Swagger UI for API exploration
+
+### 💎 Implementation Highlights
+
+- [x] **REST API:** `POST /api/event-outcomes` publishes event outcomes to Kafka
+- [x] **Kafka Consumer:** Listens to `event-outcomes` topic and triggers bet settlement
+- [x] **Business Logic:** Matches event outcomes with pending bets in the database
+- [x] **RocketMQ Producer:** Publishes settlement results to `bet-settlements` topic
+- [x] **In-Memory Database:** H2 with Flyway migrations and pre-seeded test data
+- [x] **Fully Dockerized:** Complete environment with Kafka, RocketMQ, and monitoring dashboards
+- [x] **GitHub Actions CI:** Automated testing on every push and pull request
 
 ---
 
@@ -106,10 +117,10 @@ graph TB
 | **Framework** | Spring Boot | 4.0.2 |
 | **Messaging** | Kafka Client | 4.1.1 |
 | **Messaging** | RocketMQ Client | 5.3.2 |
-| **Database** | H2 (In-Memory) | Latest |
-| **Migration** | Flyway | Latest |
+| **Database** | H2 (In-Memory) | 2.4.240 |
+| **Migration** | Flyway | 11.14.1 |
 | **Build Tool** | Gradle | 9.3 |
-| **Testing** | JUnit 5, Mockito, AssertJ | Latest |
+| **Testing** | JUnit 6, Mockito, AssertJ | 6.0.2, 5.20.0, 3.27.6 |
 | **Documentation** | SpringDoc OpenAPI | 3.0.1 |
 | **Docker** | Kafka (Confluent) | 7.7.7 |
 | **Docker** | RocketMQ | 4.9.7 |
@@ -356,9 +367,29 @@ This will start **all services** including the application container.
 docker logs -f betting_app
 ```
 
+**Example Log Output:**
+
+```log
+2026-02-04T22:15:32.145+01:00  INFO 1 --- [nio-8080-exec-3] c.m.h.a.e.EventOutcomeController         : Received request: EventOutcomeRequestDto[eventId=match-100, eventName=Real Madrid vs Barcelona, eventWinnerId=REAL_MADRID]
+
+2026-02-04T22:15:32.498+01:00  INFO 1 --- [gine-producer-1] c.m.h.i.e.EventOutcomePublisherAdapter   : Event match-100 published. Partition: 0, Offset: 0
+
+2026-02-04T22:15:32.512+01:00  INFO 1 --- [-consumer-0-C-1] c.m.h.i.e.EventOutcomeListenerAdapter    : Received event outcome: eventId=match-100, eventName=Real Madrid vs Barcelona, winnerId=REAL_MADRID
+
+2026-02-04T22:15:32.784+01:00  INFO 1 --- [-consumer-0-C-1] c.m.h.i.b.RocketMQBetSettlementPublisher : Bet settlement published to bet-settlements topic: BetPayload[betId=b-001, userId=user-1, eventId=match-100, eventMarketId=1x2, eventWinnerId=REAL_MADRID, betAmount=10.00, status=WON, settledAt=2026-02-04T21:15:32.784219Z]
+
+2026-02-04T22:15:32.801+01:00  INFO 1 --- [-consumer-0-C-1] c.m.h.i.b.RocketMQBetSettlementPublisher : Bet settlement published to bet-settlements topic: BetPayload[betId=b-002, userId=user-2, eventId=match-100, eventMarketId=1x2, eventWinnerId=BARCELONA, betAmount=25.50, status=LOST, settledAt=2026-02-04T21:15:32.801043Z]
+```
+
+**Log Flow Breakdown:**
+1. **Controller** receives REST request → logs incoming DTO
+2. **Kafka Producer** publishes event → logs partition/offset
+3. **Kafka Consumer** receives event → logs event details
+4. **Settlement Publisher** processes each bet → logs settlement payload
+
 - Application containerized and running on `http://localhost:8080`
 - All services isolated in Docker network `betting-net`
-- Production-ready setup with container health checks
+- Production-ready setup with observability through structured logging
 
 ---
 
@@ -550,6 +581,10 @@ The project has **comprehensive test coverage** across all architectural layers:
 | **Integration Tests** | Kafka, RocketMQ, Database |
 | **E2E Tests** | Full flow: Kafka → DB → RocketMQ |
 
+### 🤖 Automated CI
+
+This project uses **GitHub Actions** to automatically run tests on every `push` and `pull_request`. This ensures high code quality and guarantees that no broken code is merged into the `main` branch.
+
 ### Running Tests
 
 #### Run All Tests
@@ -719,7 +754,7 @@ public record MessagingProperties(
 
 ## 🚀 Future Improvements
 
-This assignment focuses on the **Event Outcome Settlement** flow, demonstrating how bets are automatically settled when sports events conclude. To fully support a production betting platform, the following enhancements are planned:
+This project currently focuses on the **Event Outcome Settlement** flow, demonstrating how bets are automatically settled when sports events conclude. To fully support a production betting platform, the following enhancements are planned:
 
 ### 1. **Bet Management API**
 
@@ -743,7 +778,7 @@ Currently, bets are pre-seeded via Flyway migrations for demonstration purposes.
 {
   "betId": "b-101",
   "status": "PENDING",
-  "placedAt": "2026-02-05T14:30:00Z"
+  "placedAt": "2026-02-04T21:30:00Z"
 }
 ```
 
@@ -751,5 +786,14 @@ Currently, bets are pre-seeded via Flyway migrations for demonstration purposes.
 - **Validation:** Ensure event exists, market is open, bet amount meets minimum requirements
 - **Idempotency:** Prevent duplicate bets using idempotency keys
 - **Balance Check:** Integrate with wallet service to verify user funds
+
+---
+
+## 👤 Author
+
+**Mario Vegh**
+- 🐙 GitHub: [@MarioCroSite](https://github.com/MarioCroSite)
+- 💼 LinkedIn: [mvegh](https://hr.linkedin.com/in/mvegh)
+- 📁 Repository: [hexagonal-betting-engine](https://github.com/MarioCroSite/hexagonal-betting-engine)
 
 ---
