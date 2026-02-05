@@ -4,7 +4,7 @@
 
 <h1 align="center">Hexagonal Betting Engine</h1>
 
-> A distributed betting settlement system built with **Spring Boot 4**, **Kafka**, and **RocketMQ** using **Hexagonal Architecture**.
+> A distributed betting settlement system built with **Spring Boot**, **Kafka**, **RocketMQ**, and **H2** using **Hexagonal Architecture**.
 
 [![CI](https://github.com/MarioCroSite/hexagonal-betting-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/MarioCroSite/hexagonal-betting-engine/actions)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
