@@ -27,8 +27,7 @@ https://github.com/user-attachments/assets/cb9a3e0c-453b-4c1f-bde5-bc85707f02ae
 
 </p>
 
-> The demo showcases the entire betting settlement lifecycle: placing an event outcome via REST API, Kafka message consumption, bet settlement logic, and RocketMQ publishing.
-
+> The demo showcases the entire betting settlement lifecycle: **REST API** → **Kafka** publishing and consumption → bet settlement logic → **RocketMQ** publishing.
 ---
 
 ## 📋 Table of Contents
