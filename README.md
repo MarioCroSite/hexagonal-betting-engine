@@ -6,12 +6,28 @@
 
 > A distributed betting settlement system built with **Spring Boot**, **Kafka**, **RocketMQ**, and **H2** using **Hexagonal Architecture**.
 
-[![CI](https://github.com/MarioCroSite/hexagonal-betting-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/MarioCroSite/hexagonal-betting-engine/actions)
-[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Kafka](https://img.shields.io/badge/Kafka%20Client-4.1.1-black.svg)](https://kafka.apache.org/)
-[![RocketMQ](https://img.shields.io/badge/RocketMQ%20Client-5.3.2-red.svg)](https://rocketmq.apache.org/)
-[![H2](https://img.shields.io/badge/H2-2.4.240-blue.svg)](https://www.h2database.com/)
+<p align="center">
+  <a href="https://github.com/MarioCroSite/hexagonal-betting-engine/actions"><img src="https://github.com/MarioCroSite/hexagonal-betting-engine/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21-orange.svg" alt="Java"></a>
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring%20Boot-4.0.2-brightgreen.svg" alt="Spring Boot"></a>
+  <a href="https://kafka.apache.org/"><img src="https://img.shields.io/badge/Kafka%20Client-4.1.1-black.svg" alt="Kafka"></a>
+  <a href="https://rocketmq.apache.org/"><img src="https://img.shields.io/badge/RocketMQ%20Client-5.3.2-red.svg" alt="RocketMQ"></a>
+  <a href="https://www.h2database.com/"><img src="https://img.shields.io/badge/H2-2.4.240-blue.svg" alt="H2"></a>
+</p>
+
+---
+
+## 🎬 Demo
+
+Watch the complete end-to-end flow in action:
+
+<p align="center">
+
+https://github.com/user-attachments/assets/cb9a3e0c-453b-4c1f-bde5-bc85707f02ae
+
+</p>
+
+> The demo showcases the entire betting settlement lifecycle: placing an event outcome via REST API, Kafka message consumption, bet settlement logic, and RocketMQ publishing.
 
 ---
 
