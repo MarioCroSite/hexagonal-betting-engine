@@ -24,6 +24,7 @@ import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAUL
 import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.createEntity;
 import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_ID;
 import static com.mario.hexagonalbettingengine.fixtures.EventOutcomeFixtures.DEFAULT_EVENT_NAME;
+import static com.mario.hexagonalbettingengine.infrastructure.betting.payload.BetStatus.WON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -107,7 +108,7 @@ class BetSettlementEndToEndIT extends BaseIT {
                 .eventMarketId("1x2")
                 .eventWinnerId(DEFAULT_WINNER_ID)
                 .betAmount(new java.math.BigDecimal("100.00"))
-                .status(com.mario.hexagonalbettingengine.infrastructure.betting.payload.BetStatus.WON)
+                .status(WON)
                 .build();
 
         var capturedPayload = payloadCaptor.getValue();

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
+import static com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING;
 import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.baseEntity;
 import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.baseBet;
 import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.wonBet;
@@ -37,7 +38,7 @@ class BetMapperTest {
     void shouldMapDomainToEntity() {
         // Given
         var domain = baseBet()
-                .status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING)
+                .status(PENDING)
                 .build();
 
         // When

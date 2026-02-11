@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING;
 import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.DEFAULT_EVENT_ID;
 import static com.mario.hexagonalbettingengine.fixtures.BetEntityFixtures.baseEntity;
 import static com.mario.hexagonalbettingengine.fixtures.BetFixtures.*;
@@ -34,7 +35,7 @@ class BetRepositoryAdapterTest {
     void shouldFindPendingBetsByEventId() {
         // Given
         var entity = baseEntity().status(BetStatus.PENDING).build();
-        var domainBet = baseBet().status(com.mario.hexagonalbettingengine.domain.betting.BetStatus.PENDING).build();
+        var domainBet = baseBet().status(PENDING).build();
 
         when(jpaRepository.findByEventIdAndStatus(DEFAULT_EVENT_ID, BetStatus.PENDING))
                 .thenReturn(List.of(entity));
